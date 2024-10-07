@@ -86,9 +86,11 @@ class Grid{
         int temp2;
         int count=0;
         while(count<5){
-            while(randomRow[count]!=randomRow[count-1] && randomCol[count]!=randomCol[count-1]){
+            while(randomRow[count]!=temp1 && randomCol[count]!=temp2){
                 randomRow[count]=rand()%(rows-2)+1;
                 randomCol[count]=rand()%(cols-2)+2;
+                temp1=randomRow[count];
+                temp2=randomCol[count];
             }
             count++;
         }
