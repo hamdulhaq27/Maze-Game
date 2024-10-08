@@ -16,7 +16,7 @@ object-oriented programming principles.*/
 #include<iostream>
 #include<cstdlib>
 #include<ctime>
-//#include<curses.h>
+#include<ncurses.h>
 
 using namespace std;
 
@@ -135,11 +135,11 @@ class Grid{
         doorCoordinates[0]=randomRow[4];
         doorCoordinates[1]=randomCol[4];
 
-        cout<<"Player coordinates: "<<"("<<playerCoordinates[0]<<","<<playerCoordinates[1]<<")"<<endl;
-        cout<<"Key coordinates: "<<"("<<keyCoordinates[0]<<","<<keyCoordinates[1]<<")"<<endl;
-        cout<<"Bomb coordinates: "<<"("<<bombCoordinates[0]<<","<<bombCoordinates[1]<<")"<<endl;
-        cout<<"Coin coordinates: "<<"("<<coinCoordinates[0]<<","<<coinCoordinates[1]<<")"<<endl;
-        cout<<"Door coordinates: "<<"("<<doorCoordinates[0]<<","<<doorCoordinates[1]<<")"<<endl;
+        printw<<"Player coordinates: "<<"("<<playerCoordinates[0]<<","<<playerCoordinates[1]<<")"<<endl;
+        printw<<"Key coordinates: "<<"("<<keyCoordinates[0]<<","<<keyCoordinates[1]<<")"<<endl;
+        printw<<"Bomb coordinates: "<<"("<<bombCoordinates[0]<<","<<bombCoordinates[1]<<")"<<endl;
+        printw<<"Coin coordinates: "<<"("<<coinCoordinates[0]<<","<<coinCoordinates[1]<<")"<<endl;
+        print<<"Door coordinates: "<<"("<<doorCoordinates[0]<<","<<doorCoordinates[1]<<")"<<endl;
 
         for(int i=0;i<rows;i++){
             for(int j=0;j<cols;j++){
@@ -169,7 +169,7 @@ class Grid{
             Node* column=row;
             
             while(column!=nullptr){
-                cout<<column->data<<" ";
+                printw<<column->data<<" ";
                 column=column->next;
             }
             
@@ -296,9 +296,15 @@ class Grid{
 
 int main()
 {
+    initscr();
+    printw("Hello, ncurses!");
     Grid grid;
     grid.createGrid();
     grid.displayGrid();
+
+    refresh();
+    getch();
+    endwin();
     
     return 0;
 }
