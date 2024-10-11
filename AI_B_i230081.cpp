@@ -38,117 +38,195 @@ struct Node{
 
 };
 
+class Game{
+
+    private:
+
+    int Rows;
+    int Columns;
+    bool level1;
+    bool level2;
+    bool level3;
+
+    public:
+
+    Game(){
+        level1=true;
+        level2=false;
+        level3=false;
+    }
+
+    int getRows(){
+        
+        if(level1==true){
+            Rows=10;
+        }
+
+        if(level2==true){
+            Rows=15;
+        }
+
+        if(level3==true){
+            Rows=20;
+        }
+
+        return Rows;
+
+    }
+
+    int getColumns(){
+        
+        if(level1==true){
+            Columns=10;
+        }
+
+        if(level2==true){
+            Columns=15;
+        }
+
+        if(level3==true){
+            Columns=20;
+        }
+
+        return Columns;
+
+    }
+
+};
+
 // Doubly Linked List Class
-class Grid{
+class Grid:public Game{
 
     private:
     
     Node* head;
     Node* tail;
-    int rows;
-    int cols;
     int randomRow[5];
     int randomCol[5];
+    int rows;
+    int cols;
     char coin;
     char player;
     char key;
     char bomb;
     char door;
-    int playerCoordinates[2];
-    int keyCoordinates[2];
-    int bombCoordinates[2];
-    int coinCoordinates[2];
-    int doorCoordinates[2];
+    int playerX;
+    int playerY;
+    int coinX;
+    int coinY;
+    int doorX;
+    int doorY;
+    int bombX;
+    int bombY;
+    int keyX;
+    int keyY;
+    char keyPressed;
+
 
     public:
 
     Grid(){
         head=nullptr;
         tail=nullptr;
-        rows=15;
-        cols=15;
         coin='C';
         player='P';
         key='K';
         door='D';
         bomb='B';
+        playerX=-1;
+        playerY=-1;
+        bombX=-1;
+        bombY=-1;
+        doorX=-1;
+        doorY=-1;
+        keyX=-1;
+        keyY=-1;
+        coinX=-1;
+        coinY=-1;
+        rows=getRows();
+        cols=getColumns();
     }
 
-    void createGrid(){
-       
+   void createGrid(){
+
         if(rows<=0 || cols<=0){
-            cout<<"Invalid number of rows and columns entered"<<endl;
+            printw("Invalid number of rows and columns entered \n");
             return;
         }
 
-        srand(time(0));
-        int temp1;
-        int temp2;
-        int count=0;
-        while(count<5){
-            while(randomRow[count]!=temp1 && randomCol[count]!=temp2){
-                randomRow[count]=rand()%(rows-2)+1;
-                randomCol[count]=rand()%(cols-2)+2;
-                temp1=randomRow[count];
-                temp2=randomCol[count];
+        bool occupied[rows][cols];
+        for(int i=0;i<rows;i++){
+            for(int j=0;j<cols;j++){
+                occupied[i][j]=false;
             }
-            count++;
-        }
+        } 
+
+        srand(time(0));
         Node* grid[rows][cols];
 
         for(int i=0;i<rows;i++){
             for(int j=0;j<cols;j++){
-
+                
                 if(i==0 || j==0 || i==rows-1 || j==cols-1){
                     grid[i][j]=new Node('#');
-                }
-
+                } 
+                
                 else{
                     grid[i][j]=new Node('.');
                 }
-
             }
         }
-        
-        grid[randomRow[0]][randomCol[0]]->data=player;
-        
-        playerCoordinates[0]=randomRow[0];
-        playerCoordinates[1]=randomCol[0];
-        
-        grid[randomRow[1]][randomCol[1]]->data=key;
-        
-        keyCoordinates[0]=randomRow[1];
-        keyCoordinates[1]=randomCol[1];
-        
-        grid[randomRow[2]][randomCol[2]]->data=bomb;
-        
-        bombCoordinates[0]=randomRow[2];
-        bombCoordinates[1]=randomCol[2];
-        
-        grid[randomRow[3]][randomCol[3]]->data=coin;
-        
-        coinCoordinates[0]=randomRow[3];
-        coinCoordinates[1]=randomCol[3];
-        
-        grid[randomRow[4]][randomCol[4]]->data=door;
-        
-        doorCoordinates[0]=randomRow[4];
-        doorCoordinates[1]=randomCol[4];
 
-        printw<<"Player coordinates: "<<"("<<playerCoordinates[0]<<","<<playerCoordinates[1]<<")"<<endl;
-        printw<<"Key coordinates: "<<"("<<keyCoordinates[0]<<","<<keyCoordinates[1]<<")"<<endl;
-        printw<<"Bomb coordinates: "<<"("<<bombCoordinates[0]<<","<<bombCoordinates[1]<<")"<<endl;
-        printw<<"Coin coordinates: "<<"("<<coinCoordinates[0]<<","<<coinCoordinates[1]<<")"<<endl;
-        print<<"Door coordinates: "<<"("<<doorCoordinates[0]<<","<<doorCoordinates[1]<<")"<<endl;
+        int count=0;
+        while(count<5){
+            int temp1,temp2;
+
+            do{
+                temp1=rand()%(rows-2)+1;
+                temp2=rand()%(cols-2)+1;
+            } while(occupied[temp1][temp2]);
+
+            occupied[temp1][temp2]=true;
+
+            if(count==0){
+                grid[temp1][temp2]->data=player;
+                playerX=temp1;
+                playerY=temp2;
+            } 
+            
+            else if(count==1){
+                grid[temp1][temp2]->data=key;
+                keyX=temp1;
+                keyY=temp2;
+            } 
+            
+            else if(count==2){
+                grid[temp1][temp2]->data=bomb;
+                bombX=temp1;
+                bombY=temp2;
+            } 
+            
+            else if(count==3){
+                grid[temp1][temp2]->data=coin;
+                coinX=temp1;
+                coinY=temp2;
+            } 
+            
+            else if (count==4){
+                grid[temp1][temp2]->data=door;
+                doorX=temp1;
+                doorY=temp2;
+            }
+
+            count++;
+        }
 
         for(int i=0;i<rows;i++){
             for(int j=0;j<cols;j++){
-                
                 if(j<cols-1){
                     grid[i][j]->next=grid[i][j+1];
                     grid[i][j+1]->previous=grid[i][j];
                 }
-
                 if(i<rows-1){
                     grid[i][j]->bottom=grid[i+1][j];
                     grid[i+1][j]->top=grid[i][j];
@@ -158,26 +236,98 @@ class Grid{
 
         head=grid[0][0];
         tail=grid[rows-1][cols-1];
-    
+
+        displayCoordinates();
     }
 
-    void displayGrid(){
-        Node* row=head;
-        
-        cout<<"\nGrid:\n"<<endl;
-        while(row!=nullptr){
-            Node* column=row;
-            
-            while(column!=nullptr){
-                printw<<column->data<<" ";
-                column=column->next;
-            }
-            
-            cout<<endl;
-            row=row->bottom;
+
+    void displayCoordinates() {
+        printw("Player coordinates: (%d, %d)\n",playerX,playerY);
+        printw("Key coordinates: (%d, %d)\n", keyX, keyY);
+        printw("Bomb coordinates: (%d, %d)\n", bombX,bombY);
+        printw("Coin coordinates: (%d, %d)\n", coinX,coinY);
+        printw("Door coordinates: (%d, %d)\n", doorX, doorY);
+    }
+
+    void movePlayer(char input){
+ 
+        int newX=playerX;
+        int newY=playerY;
+
+        switch (input){
+            case 'w':
+                newX--;
+                break;
+            case 'a':
+                newY--;
+                break;
+            case 's':
+                newX++;
+                break;
+            case 'd':
+                newY++;
+                break;
+            default:
+                return; 
         }
 
-        cout<<endl;
+        
+        if(newX>=0 && newX<rows && newY>=0 && newY<cols){
+
+            Node* current=head;
+
+            for(int i=0;i<playerY;i++){
+                current=current->bottom;
+            }
+
+            for(int j=0;j<playerY;j++){
+                current = current->next;
+            }
+
+            current->data='.'; 
+            Node* nextNode=head;
+
+            for(int i=0;i<newX;i++){
+                nextNode=nextNode->bottom;
+            }
+
+            for(int j=0;j<newY;j++){
+                nextNode=nextNode->next;
+            }
+
+            if(nextNode->data!='#'){
+                playerX=newX;
+                playerY=newY;
+                nextNode->data=player;
+
+                //displayCoordinates();
+            } 
+            else{
+                current->data=player;
+            }
+        }
+
+        displayGrid();
+    }
+
+
+    void displayGrid() {
+        clear();
+        Node* row = head;
+        
+        printw("\nGrid:\n");
+        while (row != nullptr) {
+            Node* column = row;
+            while (column != nullptr) {
+                printw("%c ", column->data);
+                column = column->next;
+            }
+            printw("\n");
+            row = row->bottom;
+        }
+        printw("\n");
+
+        refresh();
     }
 
     ~Grid(){
@@ -294,17 +444,31 @@ class Grid{
 //     }
 // };
 
-int main()
-{
-    initscr();
-    printw("Hello, ncurses!");
+int main() {
+    initscr();          
+    noecho();           
+    cbreak();          
+    keypad(stdscr, TRUE);
+
     Grid grid;
+    Game game;
     grid.createGrid();
     grid.displayGrid();
 
-    refresh();
-    getch();
+    printw("Press 'q' to quit or any other key to continue...\n");
+
+    int ch;
+    while (true) { 
+        ch = getch();
+        printw("You pressed: %c\n", ch);
+        grid.movePlayer(ch);
+        refresh();
+
+        if (ch == 'q') {
+            break; 
+        }       
+    }
+
     endwin();
-    
     return 0;
 }
