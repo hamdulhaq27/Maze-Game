@@ -455,6 +455,8 @@ int main() {
     grid.createGrid();
     grid.displayGrid();
 
+    printw("Hello");
+
     printw("Press 'q' to quit or any other key to continue...\n");
 
     int ch;
