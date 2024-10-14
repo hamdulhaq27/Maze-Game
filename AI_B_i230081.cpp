@@ -19,6 +19,8 @@ object-oriented programming principles.*/
 using namespace std;
 
 struct Node {
+    int x;
+    int y;
     char data;
     Node* next;
     Node* previous;
@@ -43,11 +45,12 @@ class Game {
     bool level1;
     bool level2;
     bool level3;
+    int undoCount;
 
     public:
     Game() {
-        level1 = true;
-        level2 = false;
+        level1 = false;
+        level2 = true;
         level3 = false;
         score = 0;
     }
@@ -84,31 +87,81 @@ class Game {
 
     void setMoves(int Moves) {
         if(level1==true){
+            undoCount=6;
             moves = Moves+6;
         }
 
         if(level2==true){
+            undoCount=4;
             moves = Moves+2;
         }
 
         if(level3==true){
+            undoCount=1;
             moves = Moves;
         }
     }
 
-    void decreaseMoves() {
+    void decreaseMoves(){
         if (moves > 0) {
             moves--;
         }
     }
 
+    void decreaseUndoCount(){
+        undoCount--;
+        moves++;
+    }
+
+    void increaseUndoCount(){
+        undoCount++;
+    }
+
     int getMoves() {
         return moves;
+    }
+
+    int getUndoCount(){
+        return undoCount;
+    }
+};
+
+class Stack:public Game{
+
+    private:
+
+    Node* top;
+
+    public:
+
+    Stack(){
+        top=nullptr;
+    }
+
+    void push(int x1,int y1){
+        Node* newNode=new Node(' ');
+        newNode->x=x1;
+        newNode->y=y1;
+        newNode->next=top;
+        top=newNode;
+    }
+
+    Node* pop(){
+        
+        if(top==nullptr){
+            printw("Can not move back further than this");
+            return nullptr;
+        }
+
+        Node* temp=top;
+        top=top->next;
+        
+        return temp;
     }
 };
 
 // Doubly Linked List Class
-class Grid : public Game {
+class Grid : public Game{
     private:
     Node* head;
     Node* tail;
@@ -129,6 +182,8 @@ class Grid : public Game {
     int newVerticalDistance;
     int distance;
     int sense;
+    bool undo;
+    Stack stack1;
 
     public:
     Grid() {
@@ -150,9 +205,12 @@ class Grid : public Game {
         newHorizontalDistance=-1;
         newVerticalDistance=-1;
         distance = -1;
+        sense=-1;
+        undo=false;
+        stack1=Stack();
     }
 
-    void calculateInitialDistance() {
+    int calculateInitialDistance() {
         horizontalDistance = keyX - playerX;
         verticalDistance = keyY - playerY;
 
@@ -164,8 +222,10 @@ class Grid : public Game {
             verticalDistance*=-1;
         }
 
-        distance = horizontalDistance + verticalDistance;
+        int Distance = horizontalDistance + verticalDistance;
         setMoves(distance);
+
+        return Distance;
     }
 
     void createGrid() {
@@ -240,36 +300,34 @@ class Grid : public Game {
         head = grid[0][0];
         tail = grid[rows - 1][cols - 1];
 
-        calculateInitialDistance();
+        distance=calculateInitialDistance();
     }
 
     void movePlayer(char input) {
         int newX = playerX;
         int newY = playerY;
-        
-        newHorizontalDistance=keyX-playerX;
-        newVerticalDistance=keyY-playerY;
 
-        if(newVerticalDistance<0){
-            newVerticalDistance*=-1;
-        }
-
-        if(newHorizontalDistance<0){
-            newHorizontalDistance*=-1;
-        }
         
         if (input == 'w') {
             newY--;
-        } else if (input == 'a') {
+        } 
+        else if (input == 'a') {
             newX--;
-        } else if (input == 's') {
+        } 
+        else if (input == 's') {
             newY++;
-        } else if (input == 'd') {
+        } 
+        else if (input == 'd') {
             newX++;
+        }
+        else if (input == 'u' && getUndoCount() > 0) {
+            undo = true; 
         }
 
         if (newY >= 0 && newY < rows && newX >= 0 && newX < cols) {
             Node* current = head;
+            
+            
             for (int i = 0; i < playerY; i++) {
                 current = current->bottom;
             }
@@ -277,9 +335,14 @@ class Grid : public Game {
                 current = current->next;
             }
 
-            current->data = '.';
+            if (!undo) {
+                
+                stack1.push(playerX, playerY);
+                current->data = '.'; 
+            }
 
             Node* nextNode = head;
+
             for (int i = 0; i < newY; i++) {
                 nextNode = nextNode->bottom;
             }
@@ -287,16 +350,52 @@ class Grid : public Game {
                 nextNode = nextNode->next;
             }
 
+            if(undo){
+                Node* previousPosition = stack1.pop();
+                if (previousPosition != nullptr) {
+                    playerX = previousPosition->x;
+                    playerY = previousPosition->y;
+
+                    Node* restoredNode = head;
+                    for (int i = 0; i < playerY; i++) {
+                        restoredNode = restoredNode->bottom;
+                    }
+                    for (int j = 0; j < playerX; j++) {
+                        restoredNode = restoredNode->next;
+                    }
+
+                    restoredNode->data = player;
+                    nextNode->data='.';
+                    decreaseUndoCount();
+                }
+                undo = false;
+                return;
+            }
+
+            
             if (nextNode->data != '#') {
-                playerX = newX;
+                playerX = newX; 
                 playerY = newY;
                 nextNode->data = player;
                 decreaseMoves();
             } else {
-                current->data = player;
+                current->data = player; 
             }
         }
 
+    
+        newHorizontalDistance = keyX - playerX;
+        newVerticalDistance = keyY - playerY;
+
+        if (newVerticalDistance < 0) {
+            newVerticalDistance *= -1;
+        }
+
+        if (newHorizontalDistance < 0) {
+            newHorizontalDistance *= -1;
+        }
+
+        sense = newHorizontalDistance + newVerticalDistance;
         displayGrid();
     }
 
@@ -310,21 +409,19 @@ class Grid : public Game {
         printw("Moves: %d\n", getMoves());
         printw("Score: %d\n", getScore());
 
-        int newDistance=newHorizontalDistance+newVerticalDistance;
-        int tempDistance=horizontalDistance+verticalDistance;
 
         printw("Hint: ");
 
-        if(newDistance==tempDistance){
-            printw("No progress\n");
-        }
-        
-        if(newDistance<tempDistance){
+        if(sense<distance){
             printw("Getting Closer\n");
         }
-
-        if(newDistance>tempDistance){
+        
+        if(sense>distance){
             printw("Moving Further Away\n");
+        }
+
+        if(sense==distance){
+            printw("Keep Moving\n");
         }
 
         printw("\nGrid:\n");
