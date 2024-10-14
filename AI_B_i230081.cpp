@@ -38,6 +38,7 @@ struct Node {
 
 class Game {
     private:
+    
     int Rows;
     int Columns;
     int score;
@@ -85,6 +86,10 @@ class Game {
         return score;
     }
 
+    void increaseScore(){
+        score++;
+    }
+
     void setMoves(int Moves) {
         if(level1==true){
             undoCount=6;
@@ -108,9 +113,12 @@ class Game {
         }
     }
 
+    void increaseMoves(){
+        moves++;
+    }
+
     void decreaseUndoCount(){
         undoCount--;
-        moves++;
     }
 
     void increaseUndoCount(){
@@ -183,6 +191,9 @@ class Grid : public Game{
     int distance;
     int sense;
     bool undo;
+    bool keyStatus;
+    int numOfBombs;
+    int numOfCoins;
     Stack stack1;
 
     public:
@@ -207,7 +218,10 @@ class Grid : public Game{
         distance = -1;
         sense=-1;
         undo=false;
+        keyStatus=false;
         stack1=Stack();
+        numOfBombs=0;
+        numOfCoins=0;
     }
 
     int calculateInitialDistance() {
@@ -223,7 +237,7 @@ class Grid : public Game{
         }
 
         int Distance = horizontalDistance + verticalDistance;
-        setMoves(distance);
+        setMoves(Distance);
 
         return Distance;
     }
@@ -233,6 +247,12 @@ class Grid : public Game{
             printw("Invalid number of rows and columns entered \n");
             return;
         }
+
+        numOfBombs=rows/5;
+        numOfCoins=rows/5;
+
+        Node* bombs[numOfBombs];
+        Node* coins[numOfCoins];
 
         bool occupied[rows][cols];
         for (int i = 0; i < rows; i++) {
@@ -255,7 +275,7 @@ class Grid : public Game{
         }
 
         int count = 0;
-        while (count < 5) {
+        while (count < 3) {
             int temp1, temp2;
 
             do {
@@ -274,14 +294,34 @@ class Grid : public Game{
                 keyX = temp2;
                 keyY = temp1;
             } else if (count == 2) {
-                grid[temp1][temp2]->data = bomb;
-            } else if (count == 3) {
-                grid[temp1][temp2]->data = coin;
-            } else if (count == 4) {
                 grid[temp1][temp2]->data = door;
             }
 
             count++;
+        }
+
+        for(int i=0;i<numOfBombs;i++){
+            int temp3,temp4;
+            do {
+                temp3 = rand() % (rows - 2) + 1;
+                temp4 = rand() % (cols - 2) + 1;
+            } while (occupied[temp3][temp4]);
+
+            occupied[temp3][temp4] = true;
+            grid[temp3][temp4]->data=bomb;
+            bombs[i]=grid[temp3][temp4];
+        }
+
+        for(int i=0;i<numOfCoins;i++){
+            int temp5,temp6;
+            do {
+                temp5 = rand() % (rows - 2) + 1;
+                temp6 = rand() % (cols - 2) + 1;
+            } while (occupied[temp5][temp6]);
+
+            occupied[temp5][temp6] = true;
+            grid[temp5][temp6]->data=coin;
+            coins[i]=grid[temp5][temp6];
         }
 
         for (int i = 0; i < rows; i++) {
@@ -322,6 +362,11 @@ class Grid : public Game{
         }
         else if (input == 'u' && getUndoCount() > 0) {
             undo = true; 
+        }
+
+        if(input =='u' && getUndoCount()==0){
+            undo=false;
+            increaseMoves();
         }
 
         if (newY >= 0 && newY < rows && newX >= 0 && newX < cols) {
@@ -367,8 +412,11 @@ class Grid : public Game{
                     restoredNode->data = player;
                     nextNode->data='.';
                     decreaseUndoCount();
+                    increaseMoves();
                 }
+                
                 undo = false;
+                displayGrid();
                 return;
             }
 
@@ -378,7 +426,9 @@ class Grid : public Game{
                 playerY = newY;
                 nextNode->data = player;
                 decreaseMoves();
-            } else {
+            } 
+            
+            else {
                 current->data = player; 
             }
         }
@@ -407,6 +457,13 @@ class Grid : public Game{
         printw("Key coordinates: (%d, %d)\n", keyX, keyY);
 
         printw("Moves: %d\n", getMoves());
+        printw("Undo Count: %d\n", getUndoCount());
+        if(keyStatus==false){
+            printw("Key Status: False\n");
+        }
+        else{
+            printw("Key Status: True\n");
+        }
         printw("Score: %d\n", getScore());
 
 
