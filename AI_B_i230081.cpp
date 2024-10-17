@@ -132,6 +132,34 @@ class Game {
     int getUndoCount(){
         return undoCount;
     }
+
+    void endGame(){
+        clear();
+        attron(COLOR_PAIR(1));
+        attron(A_BOLD);
+        printw("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\t\t\t\t\tGame Over You Activated A Bomb!");
+        attroff(COLOR_PAIR(1));
+        attron(A_BOLD);
+    }
+
+    void endGame2(){
+        clear();
+        attron(COLOR_PAIR(1));
+        attron(A_BOLD);
+        printw("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\t\t\t\t\tGame Over You Ran Out Of Moves!");
+        attroff(COLOR_PAIR(1));
+        attron(A_BOLD);
+    }
+
+    void gameWon(){
+        clear();
+        attron(COLOR_PAIR(2));
+        attron(A_BOLD);
+        printw("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\t\t\t\t\tCongratulations You Have Escaped The Maze!");
+        attroff(COLOR_PAIR(2));
+        attron(A_BOLD);
+    }
+
 };
 
 class Stack:public Game{
@@ -184,6 +212,8 @@ class Grid : public Game{
     int playerY;
     int keyX;
     int keyY;
+    int doorX;
+    int doorY;
     int horizontalDistance;
     int verticalDistance;
     int newHorizontalDistance;
@@ -192,8 +222,13 @@ class Grid : public Game{
     int sense;
     bool undo;
     bool keyStatus;
+    bool coinCollected;
     int numOfBombs;
     int numOfCoins;
+    int *coinX;
+    int *coinY;
+    int *bombX;
+    int *bombY;
     Stack stack1;
 
     public:
@@ -220,8 +255,13 @@ class Grid : public Game{
         undo=false;
         keyStatus=false;
         stack1=Stack();
-        numOfBombs=0;
-        numOfCoins=0;
+        numOfBombs=getRows()/5;
+        numOfCoins=getRows()/5;
+        coinCollected=false;
+        coinX=new int[numOfCoins];
+        coinY=new int[numOfCoins];
+        bombX=new int[numOfBombs];
+        bombY=new int[numOfBombs];
     }
 
     int calculateInitialDistance() {
@@ -295,6 +335,8 @@ class Grid : public Game{
                 keyY = temp1;
             } else if (count == 2) {
                 grid[temp1][temp2]->data = door;
+                doorX=temp2;
+                doorY=temp1;
             }
 
             count++;
@@ -310,6 +352,8 @@ class Grid : public Game{
             occupied[temp3][temp4] = true;
             grid[temp3][temp4]->data=bomb;
             bombs[i]=grid[temp3][temp4];
+            bombX[i]=temp4;
+            bombY[i]=temp3;
         }
 
         for(int i=0;i<numOfCoins;i++){
@@ -322,23 +366,25 @@ class Grid : public Game{
             occupied[temp5][temp6] = true;
             grid[temp5][temp6]->data=coin;
             coins[i]=grid[temp5][temp6];
+            coinX[i]=temp6;
+            coinY[i]=temp5;
         }
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 if (j < cols - 1) {
                     grid[i][j]->next = grid[i][j + 1];
-                    grid[i][j + 1]->previous = grid[i][j];
+                    grid[i][j+1]->previous = grid[i][j];
                 }
                 if (i < rows - 1) {
                     grid[i][j]->bottom = grid[i + 1][j];
-                    grid[i + 1][j]->top = grid[i][j];
+                    grid[i+1][j]->top = grid[i][j];
                 }
             }
         }
 
         head = grid[0][0];
-        tail = grid[rows - 1][cols - 1];
+        tail = grid[rows-1][cols-1];
 
         distance=calculateInitialDistance();
     }
@@ -346,18 +392,17 @@ class Grid : public Game{
     void movePlayer(char input) {
         int newX = playerX;
         int newY = playerY;
-
-        
+    
         if (input == 'w') {
             newY--;
         } 
         else if (input == 'a') {
             newX--;
         } 
-        else if (input == 's') {
+        else if (input == 's' ) {
             newY++;
         } 
-        else if (input == 'd') {
+        else if (input == 'd'){
             newX++;
         }
         else if (input == 'u' && getUndoCount() > 0) {
@@ -368,6 +413,12 @@ class Grid : public Game{
             undo=false;
             increaseMoves();
         }
+
+        if(getMoves()==0 && !undo){
+            displayGrid();
+            return;
+        }
+
 
         if (newY >= 0 && newY < rows && newX >= 0 && newX < cols) {
             Node* current = head;
@@ -431,11 +482,51 @@ class Grid : public Game{
             else {
                 current->data = player; 
             }
+
+            for(int i=0;i<numOfCoins;i++){
+                if(playerX==coinX[i] && playerY==coinY[i]){
+                    increaseScore();
+                    increaseScore();
+                    increaseUndoCount();
+                    displayGrid();
+                    coinCollected=true;
+                    coinX[i]=-1;
+                    coinY[i]=-1;
+                }
+            }
+
+            
+            for(int i=0;i<numOfBombs;i++){
+                if(playerX==bombX[i] && playerY==bombY[i]){
+                    endGame();
+                    return;
+                }
+            }
+
+            if(playerX==keyX && playerY==keyY){
+                keyStatus=true;
+            }
+
+            if(playerX==doorX && playerY==doorY && keyStatus==true){
+                gameWon();
+                return;
+            }
         }
 
-    
-        newHorizontalDistance = keyX - playerX;
-        newVerticalDistance = keyY - playerY;
+        if(getMoves()==0 && getUndoCount()==0){
+            endGame2();
+            return;
+        }
+
+        if(keyStatus==false){
+            newHorizontalDistance = keyX - playerX;
+            newVerticalDistance = keyY - playerY;
+        }
+
+        if(keyStatus==true){
+            newHorizontalDistance=doorX-playerX;
+            newVerticalDistance=doorY-playerY;
+        }
 
         if (newVerticalDistance < 0) {
             newVerticalDistance *= -1;
@@ -453,37 +544,104 @@ class Grid : public Game{
         clear();
         Node* row = head;
 
-        printw("Player coordinates: (%d, %d)\n", playerX, playerY);
-        printw("Key coordinates: (%d, %d)\n", keyX, keyY);
+        if(coinCollected==true){
+            attron(COLOR_PAIR(2));
+            attron(A_BOLD);
+            printw("Coin Collected!\n");
+            attroff(COLOR_PAIR(2));
+            attroff(A_BOLD);
+            coinCollected=false;
+        }
 
-        printw("Moves: %d\n", getMoves());
-        printw("Undo Count: %d\n", getUndoCount());
+        if(keyStatus==true){
+            attron(COLOR_PAIR(2));
+            attron(A_BOLD);
+            printw("Key Collected!\n");
+            attroff(COLOR_PAIR(2));
+            attroff(A_BOLD);
+        }
+
+        printw("\n\t\t\t\t\t\tMoves: %d", getMoves());
+        printw("\t\tUndo Count: %d\n", getUndoCount());
         if(keyStatus==false){
-            printw("Key Status: False\n");
+            attron(COLOR_PAIR(1));
+            attron(A_BOLD);
+            printw("\n\t\t\t\t\t\tKey Status: False");
+            attroff(COLOR_PAIR(1));
+            attroff(A_BOLD);
         }
-        else{
-            printw("Key Status: True\n");
+
+        if(keyStatus==true){
+            attron(COLOR_PAIR(2));
+            attron(A_BOLD);
+            printw("\n\t\t\t\t\t\tKey Status: True");
+            attroff(COLOR_PAIR(2));
+            attroff(A_BOLD);
         }
-        printw("Score: %d\n", getScore());
 
+        printw("\tScore: %d\n", getScore());
 
-        printw("Hint: ");
+        if(sense==distance && keyStatus==false){
+            attron(COLOR_PAIR(3));
+            attron(A_BOLD);
+            printw("\n\t\t\t\t\t\tHint: ");
+            printw("Keep Moving Key Could Be Anywhere\n");
+            attron(COLOR_PAIR(3));
+            attron(A_BOLD);
+        }
 
-        if(sense<distance){
-            printw("Getting Closer\n");
+        if(sense<distance && keyStatus==false){
+            attron(COLOR_PAIR(2));
+            attron(A_BOLD);
+            printw("\n\t\t\t\t\t\tHint: ");
+            printw("Getting Closer To Key\n");
+            attroff(COLOR_PAIR(2));
+            attroff(A_BOLD);
         }
         
-        if(sense>distance){
-            printw("Moving Further Away\n");
+        if(sense>distance && keyStatus==false){
+            attron(COLOR_PAIR(1));
+            attron(A_BOLD);
+            printw("\n\t\t\t\t\t\tHint: ");
+            printw("Moving Further Away From Key\n");
+            attroff(COLOR_PAIR(1));
+            attroff(A_BOLD);
         }
 
-        if(sense==distance){
-            printw("Keep Moving\n");
+        if(sense==distance && keyStatus==true){
+            attron(COLOR_PAIR(3));
+            attron(A_BOLD);
+            printw("\n\t\t\t\t\t\tHint: ");
+            printw("Keep Moving Door Could Be Anywhere\n");
+            attroff(COLOR_PAIR(3));
+            attroff(A_BOLD);
         }
 
-        printw("\nGrid:\n");
+        if(sense<distance && keyStatus==true){
+            attron(COLOR_PAIR(2));
+            attron(A_BOLD);
+            printw("\n\t\t\t\t\t\tHint: ");
+            printw("Getting Closer To Door\n");
+            attroff(COLOR_PAIR(2));
+            attroff(A_BOLD);
+        }
+        
+        if(sense>distance && keyStatus==true){
+            attron(COLOR_PAIR(1));
+            attron(A_BOLD);
+            printw("\n\t\t\t\t\t\tHint: ");
+            printw("Moving Further Away From Door\n");
+            attroff(COLOR_PAIR(1));
+            attroff(A_BOLD);
+        }
+
+        
+        attron(A_BOLD);
+        printw("\n\t\t\t\t\t\tGrid:\n\n");
+        attron(COLOR_PAIR(5));
         while (row != nullptr) {
             Node* column = row;
+            printw("\t\t\t\t\t\t");
             while (column != nullptr) {
                 printw("%c ", column->data);
                 column = column->next;
@@ -492,6 +650,8 @@ class Grid : public Game{
             row = row->bottom;
         }
         printw("\n");
+        attroff(COLOR_PAIR(5));
+        attroff(A_BOLD);
 
         refresh();
     }
@@ -507,14 +667,26 @@ class Grid : public Game{
             }
             row = row->bottom;
         }
+
+        delete[] coinX;
+        delete[] coinY;
+        delete[] bombX;
+        delete[] bombY;
     }
 };
 
 int main() {
     initscr();
+    start_color();
     noecho();
     cbreak();
     keypad(stdscr, TRUE);
+
+    init_pair(1,COLOR_RED,COLOR_BLACK);
+    init_pair(2,COLOR_GREEN,COLOR_BLACK);
+    init_pair(3,COLOR_YELLOW,COLOR_BLACK);
+    init_pair(4,COLOR_BLUE,COLOR_BLACK);
+    init_pair(5,COLOR_MAGENTA,COLOR_BLACK);
 
     Grid grid;
     Game game;
@@ -536,5 +708,6 @@ int main() {
     }
 
     endwin();
+    
     return 0;
 }
