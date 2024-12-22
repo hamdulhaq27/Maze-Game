@@ -8,13 +8,26 @@ can get lost, be trapped forever, or you can fall into a trap, you need to be ca
 you act, one wrong move could be your downfall, this game has multiple levels, where each level increases complexity 
 of the maze testing your problem solving kills, decision making and patience.
 
+## ** Technologies Used:**
+
+**1- Programming Language:** C++
+
+**2- Libraries:** cstdlib, ctime, ncurses.h
+
+**3- Data Structures:** Stack, Linked List
+
 ## **Key Features:**
 
 1- A game grid that changes based on the level we are playing.
+
 2- player,bomb,key,door and coin items placed randomly on the grid.
+
 3- undo feature activated by user input.
+
 4- calculated number of moves using manhattan distance logic.
+
 5- ncurses styling, for a beautiful and user friendly display.
+
 6- bomb proximity logic.
 
 ## Some Images of the Game in Action
