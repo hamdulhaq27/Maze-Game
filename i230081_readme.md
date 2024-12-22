@@ -8,7 +8,7 @@ can get lost, be trapped forever, or you can fall into a trap, you need to be ca
 you act, one wrong move could be your downfall, this game has multiple levels, where each level increases complexity 
 of the maze testing your problem solving kills, decision making and patience.
 
-## ** Technologies Used:**
+## **Technologies Used:**
 
 **1- Programming Language:** C++
 
